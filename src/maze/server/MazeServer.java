@@ -1,6 +1,7 @@
 package maze.server;
 
 import maze.play.Maze;
+import maze.play.CurrentGameState;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -19,19 +20,21 @@ public class MazeServer implements Maze{
 	private static long waiting_timeout = 20000;
 	private long first_join_time;
 	
+	private MazeData maze_data;
+	
 	public MazeServer(int N, int M) {
 		this.N = N;
 		this.M = M;
 	}
 	
-	public int joinGame() {
+	public int joinGame(GameMonitor game_monitor) {
 		if (System.currentTimeMillis() - first_join_time > waiting_timeout) {
 			return -1;		// -1 indicates fail to join.
 		}
 	}
 	
 	public CurrentGameState move(int id, String direction) {
-		
+		return maze_data.move(id, direction);
 	}
 	
 	public static void main(String args[]) {
@@ -40,23 +43,23 @@ public class MazeServer implements Maze{
         }
         try {
             String name = "MazeServer";
-            MazeServer maze_server = null;
+            Maze maze= null;
             
             if (args.length != 2) {
-            	System.out.println("Usage: maze-server N M");
+            	System.out.println("Usage: maze N M");
             	System.out.println("This command will start a game server with N*N grid and M treasures.");
             	System.exit(1);
             } else {
             	try {
-            		maze_server = new MazeServer(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+            		maze = new MazeServer(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
             	} catch (NumberFormatException e) {
             		System.err.println("Arguments must be integers.");
             		System.exit(1);
             	}
             }
             
-            MazeServer stub =
-                (MazeServer) UnicastRemoteObject.exportObject(maze_server, 0);
+            Maze stub =
+                (Maze) UnicastRemoteObject.exportObject(maze, 0);
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(name, stub);
             System.out.println("MazeServer bound");
