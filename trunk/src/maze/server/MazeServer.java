@@ -2,6 +2,7 @@ package maze.server;
 
 import maze.play.Maze;
 import maze.play.CurrentGameState;
+import maze.play.GameMonitor;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -9,32 +10,31 @@ import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 
 public class MazeServer implements Maze{
-	/**
-	 * N * N grid with M treasures.
-	 */
-	final private int N, M;
-	
-	/**
-	 * Game starts 20s after the first joinGame request.
-	 */
-	private static long waiting_timeout = 20000;
-	private long first_join_time;
 	
 	private MazeData maze_data;
+	private GameTimer game_timer;
 	
 	public MazeServer(int N, int M) {
-		this.N = N;
-		this.M = M;
+		maze_data = new MazeData(N, M);
+		game_timer = new GameTimer();
 	}
 	
 	public int joinGame(GameMonitor game_monitor) {
-		if (System.currentTimeMillis() - first_join_time > waiting_timeout) {
-			return -1;		// -1 indicates fail to join.
+		/**
+		 * game is already started, can't join anymore
+		 */
+		if (game_timer.isGameStarted()) {
+			return -1;
 		}
+		return maze_data.addPlayer(game_monitor);
 	}
 	
 	public CurrentGameState move(int id, String direction) {
 		return maze_data.move(id, direction);
+	}
+	
+	public void startServer() {
+		
 	}
 	
 	public static void main(String args[]) {
