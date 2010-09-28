@@ -14,9 +14,9 @@ public class MazeServer implements Maze{
 	private MazeData maze_data;
 	private GameTimer game_timer;
 	
-	public MazeServer(int N, int M) {
-		maze_data = new MazeData(N, M);
-		game_timer = new GameTimer();
+	public MazeServer(MazeData maze_data, GameTimer game_timer) {
+		this.maze_data = maze_data;
+		this.game_timer = game_timer;
 	}
 	
 	public int joinGame(GameMonitor game_monitor) {
@@ -31,10 +31,6 @@ public class MazeServer implements Maze{
 	
 	public CurrentGameState move(int id, String direction) {
 		return maze_data.move(id, direction);
-	}
-	
-	public void startServer() {
-		
 	}
 	
 	public static void main(String args[]) {
