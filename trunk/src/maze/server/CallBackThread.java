@@ -23,5 +23,12 @@ public class CallBackThread extends Thread{
 			maze_data.callBackPlayer();
 			System.out.println("CallBackThread finishes calling back players!");
 		}
+		while (true) {
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {}
+			// check if there is crashed player
+			maze_data.checkPlayers();
+		}
 	}
 }

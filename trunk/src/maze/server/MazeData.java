@@ -17,27 +17,28 @@ public class MazeData {
 	private int[] collected;
 	private int[][] grid;
 	private GameMonitor[] player_monitors;
+	private long[] last_move_time;
 	
 	public MazeData(int N, int M) {
 		this.N = N;
 		this.M = M;
 		num_of_player = 0;
 		player_monitors = new GameMonitor[MAX_PLAYER_NUM];
+		last_move_time = new long[MAX_PLAYER_NUM];
 		
 		grid = new int[N][N];
-		
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < N; j++) {
+				grid[i][j] = 0;
+			}
+		}
 		// randomize the treasure locations
 		Random random = new Random();
 		for (int i = 0; i < M; i++) {
-			do {
-				int random_int = random.nextInt(N * N);
-				int r = random_int / N;
-				int c = random_int % N;
-				if (grid[r][c] != 1) {
-					grid[r][c] = 1;
-					break;
-				}
-			} while (true);
+			int random_int = random.nextInt(N * N);
+			int r = random_int / N;
+			int c = random_int % N;
+			grid[r][c]++;
 		}
 	}
 	public synchronized void initPlayerData() {
@@ -51,7 +52,7 @@ public class MazeData {
 				int random_int = random.nextInt(N * N);
 				int r = random_int / N;
 				int c = random_int % N;
-				if (grid[r][c] != 1 && grid[r][c] != -1) {
+				if (grid[r][c] == 0 && grid[r][c] != -1) {
 					grid[r][c] = -1;
 					location[i] = new Pair(r, c);
 					break;
@@ -112,24 +113,46 @@ public class MazeData {
 	public synchronized CurrentGameState move(int id, String direction) {
 		Pair new_loc = getNewLocation(location[id], direction);
 		location[id] = new_loc;
-		if (grid[new_loc.x][new_loc.y] == 1) {
-			collected[id]++;
+		if (grid[new_loc.x][new_loc.y] > 0) {
+			collected[id] += grid[new_loc.x][new_loc.y];
 			grid[new_loc.x][new_loc.y] = 0;
 		}
 		System.out.println("Player " + id + " moves " + direction);
+		last_move_time[id] = System.currentTimeMillis();
 		CurrentGameState ret = getCurrentGameState();
 		return ret;
 	}
+	public synchronized void checkPlayers() {
+		System.out.println("Checking if any player crashes...");
+		for (int i = 0; i < num_of_player; i++) {	// num_of_player may change here due to player crash
+			try {
+				player_monitors[i].isPlayerCrash();
+			} catch (RemoteException e) {
+				System.out.println("Player " + i + " Crashed!");
+				deletePlayer(i);
+			}
+		}
+		System.out.println("Finishes checking!");
+	}
 	public synchronized void callBackPlayer() {
 		System.out.println("Start to call back players...");
-		for (int i = 0; i < num_of_player; i++) {
+		for (int i = 0; i < num_of_player; i++) {	// num_of_player may change here due to player crash
 			try {
 				player_monitors[i].startGame();
 				System.out.println("Call back player " + i);
 			} catch (RemoteException e) {
-				System.out.println("Player " + i + " Exception:");
-				e.printStackTrace();
+				System.out.println("Player " + i + " Exception: Crash!");
+				deletePlayer(i);
 			}
 		}
+	}
+	private void deletePlayer(int id) {
+		for (int i = id; i < num_of_player - 1; i++) {
+			location[i] = location[i+1];
+			collected[i] = collected[i+1];
+			player_monitors[i] = player_monitors[i+1];
+			last_move_time[i] = last_move_time[i+1];
+		}
+		num_of_player--;
 	}
 }
