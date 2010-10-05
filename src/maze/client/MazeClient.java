@@ -1,7 +1,6 @@
 package maze.client;
 
 import java.io.Serializable;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.registry.LocateRegistry;
@@ -63,7 +62,7 @@ public class MazeClient implements GameMonitor, Serializable{
 		int ret = 0;
 		for (int i = 0; i < game_data.N; i++) {
 			for (int j = 0; j < game_data.N; j++) {
-				if (game_data.grid[i][j] == 1) ret++;
+				ret += game_data.grid[i][j];
 			}
 		}
 		return ret;
@@ -77,7 +76,7 @@ public class MazeClient implements GameMonitor, Serializable{
 		char[][] grid = new char[game_data.N][game_data.N];
 		for (int i = 0; i < game_data.N; i++) {
 			for (int j = 0; j < game_data.N; j++) {
-				if (game_data.grid[i][j] == 1) {
+				if (game_data.grid[i][j] > 0) {
 					grid[i][j] = '$';
 				} else {
 					grid[i][j] = '0';
@@ -114,15 +113,17 @@ public class MazeClient implements GameMonitor, Serializable{
 			int c = loc.y + dir[i][1];
 			if (r >= 0 && r < game_data.N && 
 					c >= 0 && c < game_data.N) {
-				if (game_data.grid[r][c] == 1) return direction[i]; 
+				if (game_data.grid[r][c] > 0) return direction[i]; 
 			}
 		}
 		
 		int d = random.nextInt(4);
 		Pair new_loc = new Pair(loc.x + dir[d][0], loc.y + dir[d][1]);
+		if (isNewLocOccupied(new_loc)) return "NoMove";
+		
 		for (int i = 0; i < game_data.N; i++) {
 			for (int j = 0; j < game_data.N; j++) {
-				if (game_data.grid[i][j] == 1) {
+				if (game_data.grid[i][j] > 0) {
 					Pair treasure_loc = new Pair(i, j);
 					if (dist(new_loc, treasure_loc) < dist(loc, treasure_loc)) {
 						return direction[d];
@@ -131,6 +132,16 @@ public class MazeClient implements GameMonitor, Serializable{
 			}
 		}
 		return "NoMove";
+	}
+	private boolean isNewLocOccupied(Pair newLoc) {
+		for (int i = 0; i < game_data.num_of_player; i++) {
+			if (i != id && 
+					newLoc.x == game_data.location[i].x && 
+					newLoc.y == game_data.location[i].y) {
+				return true;
+			}
+		}
+		return false;
 	}
 	public synchronized void playGame() throws InterruptedException {
 		Random random = new Random();
@@ -147,8 +158,11 @@ public class MazeClient implements GameMonitor, Serializable{
 			Thread.sleep(random.nextInt(5) * 1000 + 1000);
 		}
 		System.out.println("Game Over!");
+		System.exit(0);
 	}
-	
+	public boolean isPlayerCrash() {
+		return true;
+	}
 	public static void main(String args[]) {
 //		if (System.getSecurityManager() == null) {
 //            System.setSecurityManager(new SecurityManager());
