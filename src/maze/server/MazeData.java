@@ -1,6 +1,7 @@
 package maze.server;
 
 import java.util.Random;
+import java.rmi.RemoteException;
 import maze.play.CurrentGameState;
 import maze.play.Pair;
 import maze.play.GameMonitor;
@@ -52,12 +53,12 @@ public class MazeData {
 				int c = random_int % N;
 				if (grid[r][c] != 1 && grid[r][c] != -1) {
 					grid[r][c] = -1;
-					location[i].x = r;
-					location[i].y = c;
+					location[i] = new Pair(r, c);
 					break;
 				}
 			} while (true);
 		}
+		System.out.println("Players location generated!");
 		// undo the -1 flag of grid
 		for (int i = 0; i < num_of_player; i++) {
 			grid[location[i].x][location[i].y] = 0;
@@ -67,17 +68,8 @@ public class MazeData {
 			collected[i] = 0;
 		}
 	}
-	
-	public synchronized int addPlayer(GameMonitor game_monitor) {
-		if (num_of_player >= MAX_PLAYER_NUM) {
-			return -1;
-		}
-		player_monitors[num_of_player++] = game_monitor;
-		return num_of_player - 1;
-	}
-	
 	private CurrentGameState getCurrentGameState() {
-		return new CurrentGameState(location, collected, grid);
+		return new CurrentGameState(location, collected, grid, N, num_of_player);
 	}
 	private boolean isInGrid(int x, int y) {
 		return x >= 0 && x < N && y >= 0 && y < N;
@@ -107,6 +99,16 @@ public class MazeData {
 			return loc;
 		}
 	}
+	
+	
+	public synchronized int addPlayer(GameMonitor game_monitor) {
+		if (num_of_player >= MAX_PLAYER_NUM) {
+			return -1;
+		}
+		player_monitors[num_of_player++] = game_monitor;
+		System.out.println("New player joined, ID: " + (num_of_player - 1));
+		return num_of_player - 1;
+	}
 	public synchronized CurrentGameState move(int id, String direction) {
 		Pair new_loc = getNewLocation(location[id], direction);
 		location[id] = new_loc;
@@ -114,11 +116,19 @@ public class MazeData {
 			collected[id]++;
 			grid[new_loc.x][new_loc.y] = 0;
 		}
+		System.out.println("Player " + id + " moves " + direction);
 		return getCurrentGameState();
 	}
 	public synchronized void callBackPlayer() {
+		System.out.println("Start to call back players...");
 		for (int i = 0; i < num_of_player; i++) {
-			player_monitors[i].startGame();
+			try {
+				player_monitors[i].startGame();
+				System.out.println("Call back player " + i);
+			} catch (RemoteException e) {
+				System.out.println("Player " + i + " Exception:");
+				e.printStackTrace();
+			}
 		}
 	}
 }

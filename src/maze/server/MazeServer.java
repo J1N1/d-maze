@@ -34,12 +34,14 @@ public class MazeServer implements Maze{
 	}
 	
 	public static void main(String args[]) {
-		if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        }
+//		if (System.getSecurityManager() == null) {
+//            System.setSecurityManager(new SecurityManager());
+//        }
         try {
             String name = "MazeServer";
             Maze maze= null;
+            MazeData maze_data = null;
+            GameTimer game_timer = null;
             
             if (args.length != 2) {
             	System.out.println("Usage: maze N M");
@@ -47,7 +49,9 @@ public class MazeServer implements Maze{
             	System.exit(1);
             } else {
             	try {
-            		maze = new MazeServer(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+            		maze_data = new MazeData(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+            		game_timer = new GameTimer();
+            		maze = new MazeServer(maze_data, game_timer);
             	} catch (NumberFormatException e) {
             		System.err.println("Arguments must be integers.");
             		System.exit(1);
@@ -59,6 +63,11 @@ public class MazeServer implements Maze{
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(name, stub);
             System.out.println("MazeServer bound");
+            
+            Thread call_backer = new CallBackThread(maze_data, game_timer);
+            call_backer.setName("CallBackThread");
+            call_backer.start();
+            
         } catch (Exception e) {
             System.err.println("MazeServer exception:");
             e.printStackTrace();
