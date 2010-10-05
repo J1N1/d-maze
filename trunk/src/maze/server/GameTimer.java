@@ -21,7 +21,7 @@ public class GameTimer {
 	/**
 	 * Game starts 20s after the first joinGame request.
 	 */
-	private static long waiting_timeout = 2000;
+	private static long waiting_timeout = 20000;
 	private long first_join_time;
 	
 	public GameTimer() {
