@@ -71,6 +71,7 @@ public class MazeClient implements GameMonitor, Serializable{
 	private void drawScreen() {
 		System.out.println("You: * \t The others: x \t Blank grid: 0 \t Treasure: $");
 		System.out.println("Your treasures:" + game_data.collected[id] + "\t Treasures left:" + treasuresLeft());
+		System.out.println("Your location: (" + game_data.location[id].x + ", " + game_data.location[id].y + ")");
 		System.out.println();
 		char[][] grid = new char[game_data.N][game_data.N];
 		for (int i = 0; i < game_data.N; i++) {
@@ -120,17 +121,19 @@ public class MazeClient implements GameMonitor, Serializable{
 		}
 		return "NoMove";
 	}
-	public synchronized void playGame() {
+	public synchronized void playGame() throws InterruptedException {
+		Random random = new Random();
+		
 		while (!start) {
 			try {
 				wait();
 			} catch (InterruptedException e) {}
 		}
 		move(id, "NoMove");
-		drawScreen();
+		//Thread.sleep(5000);
 		while (treasuresLeft() > 0) {
 			move(id, nextMove());
-			drawScreen();
+			//Thread.sleep(random.nextInt(5) * 1000 + 1000);
 		}
 	}
 	
