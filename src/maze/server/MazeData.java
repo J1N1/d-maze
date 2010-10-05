@@ -76,19 +76,19 @@ public class MazeData {
 	}
 	private Pair getNewLocation(Pair loc, String direction) {
 		int nx = loc.x, ny = loc.y;
-		if (direction == "S") {
+		if (direction.equals("S")) {
 			nx = loc.x + 1;
 			ny = loc.y;
-		} else if (direction == "E") {
+		} else if (direction.equals("E")) {
 			nx = loc.x;
 			ny = loc.y + 1;
-		} else if (direction == "N") {
+		} else if (direction.equals("N")) {
 			nx = loc.x - 1;
 			ny = loc.y;
-		} else if (direction == "W") {
+		} else if (direction.equals("W")) {
 			nx = loc.x;
 			ny = loc.y - 1;
-		} else if (direction == "NoMove") {
+		} else if (direction.equals("NoMove")) {
 			
 		} else {
 			
@@ -117,7 +117,8 @@ public class MazeData {
 			grid[new_loc.x][new_loc.y] = 0;
 		}
 		System.out.println("Player " + id + " moves " + direction);
-		return getCurrentGameState();
+		CurrentGameState ret = getCurrentGameState();
+		return ret;
 	}
 	public synchronized void callBackPlayer() {
 		System.out.println("Start to call back players...");
