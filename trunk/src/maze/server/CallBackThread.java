@@ -15,9 +15,13 @@ public class CallBackThread extends Thread{
 	}
 	
 	public void run() {
+		System.out.println("CallBackThread start running!");
 		if (game_timer.isTimeToStart()) {
 			// call back the players
+			System.out.println("CallBackThread starts to call back players...");
+			maze_data.initPlayerData();
 			maze_data.callBackPlayer();
+			System.out.println("CallBackThread finishes calling back players!");
 		}
 	}
 }
